@@ -4,12 +4,15 @@ import archiver.app.common.Utils.errorMap
 import archiver.app.common.{Mappings, Utils}
 import archiver.app.domain.Category
 import archiver.app.service.CategoryService
+import javax.validation.Valid
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, MediaType, ResponseEntity}
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
+import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation._
+import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
 @Controller
 class CategoryController @Autowired()(private val categoryService: CategoryService) {
@@ -19,16 +22,29 @@ class CategoryController @Autowired()(private val categoryService: CategoryServi
   @GetMapping(Array(Mappings.ALL_CATEGORIES))
   def listCategories(model: Model): String = {
     model.addAttribute("categories", categoryService.getAllCategories)
-    model.addAttribute("category", new Category)
+
+    val category =
+      if (model.containsAttribute("category"))
+        model.asMap().get("category")
+      else
+        new Category
+    model.addAttribute("category", category)
 
     Utils.decorateMainPage(model, "category/list-categories", "list-categories")
   }
 
-  @PostMapping(Array(Mappings.SAVE_CATEGORY))
-  def saveCategoryFromForm(@ModelAttribute category: Category): String = {
+  @PostMapping(value = Array(Mappings.SAVE_CATEGORY))
+  def saveCategoryFromForm(@Valid @ModelAttribute(name = "category") category: Category,
+                           binding: BindingResult, redirect: RedirectAttributes): String = {
     log.debug(s"Category with name ${category.categoryName} is being saved")
 
-    categoryService.saveCategory(category)
+    if (binding.hasErrors) {
+      redirect.addFlashAttribute("org.springframework.validation.BindingResult.category", binding)
+      redirect.addFlashAttribute("category", category)
+    } else {
+      categoryService.saveCategory(category)
+    }
+
     Mappings.REDIRECT_TO_CATEGORIES
   }
 
@@ -36,7 +52,6 @@ class CategoryController @Autowired()(private val categoryService: CategoryServi
   @ResponseBody
   def deleteCategoryAndFiles(@RequestParam(name = "categoryId", required = true) categoryId: Long):
   ResponseEntity[Map[String, Object]] = {
-
     log.debug(s"Request to ${Mappings.DELETE_CATEGORY} to remove record with ID: $categoryId")
 
     if (categoryId == 0) {
@@ -54,4 +69,5 @@ class CategoryController @Autowired()(private val categoryService: CategoryServi
       }
     }
   }
+
 }

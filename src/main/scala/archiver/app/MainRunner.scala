@@ -1,6 +1,7 @@
 package archiver.app
 
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import io.undertow.Undertow
 import org.springframework.beans.factory.annotation.Value
@@ -43,6 +44,8 @@ class AppConf extends WebMvcConfigurer {
     new ObjectMapper()
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       .registerModule(DefaultScalaModule)
+      .registerModule(new JavaTimeModule)
+      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
   }
 
   // http clear text listener should be added manually

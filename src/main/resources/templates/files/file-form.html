@@ -6,14 +6,27 @@
     <form role="form" action="#" method="post" enctype="multipart/form-data"
           th:action="${T(archiver.app.common.Mappings).SAVE_FILE()}" th:object="${file}">
 
-        <!--<ul>-->
-        <!--<li th:errors="*{id}" />-->
-        <!--<li th:errors="*{name}" />-->
-        <!--<li th:errors="*{gender}" />-->
-        <!--<li th:errors="*{percentage}" />-->
-        <!--</ul>-->
-        <th:block th:if="${param.error != null}">
-            <div th:replace="common/alert :: alert (type='danger', message='HATATATATATA')">Alert</div>
+        <th:block th:with="valError = ${validationError != null ? validationError : false}">
+            <div role="alert" class="alert alert-dismissible"
+                 th:classappend="|${valError ? 'alert-danger':''} ${!valError ? 'd-none':''}|">
+                <ul role="list">
+                    <li role="listitem" class="error" th:if="${#fields.hasErrors('fileName')}" th:errors="*{fileName}">
+                        File Name Error
+                    </li>
+                    <li role="listitem" th:if="${#fields.hasErrors('filePath')}" th:errors="*{filePath}">
+                        File Path Error
+                    </li>
+                    <li role="listitem" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}">
+                        Category ID Error
+                    </li>
+                    <li role="listitem" th:if="${#fields.hasErrors('selectedFilePermissions')}"
+                        th:errors="*{selectedFilePermissions}">File Permissions Error
+                    </li>
+                    <li role="listitem" th:if="${#fields.hasErrors('multipartFile')}" th:errors="*{multipartFile}">
+                        Uploaded File Error
+                    </li>
+                </ul>
+            </div>
         </th:block>
 
         <fieldset>

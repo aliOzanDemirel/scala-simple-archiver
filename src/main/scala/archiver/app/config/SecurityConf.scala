@@ -31,6 +31,9 @@ class SecurityConf extends WebSecurityConfigurerAdapter {
   @Value("${app.enabled.headers}")
   var enableHeaders: Boolean = _
 
+  @Value("${spring.h2.console.path}")
+  var h2ConsolePath: String = _
+
   override def configure(http: HttpSecurity): Unit = {
 
     http.authorizeRequests()
@@ -49,16 +52,16 @@ class SecurityConf extends WebSecurityConfigurerAdapter {
       .logout().logoutSuccessUrl("/?logged-out")
       .and()
       .exceptionHandling().accessDeniedPage("/")
+      .and()
+      .sessionManagement().maximumSessions(1)
 
     if (enableCsrf) {
-      http.csrf().ignoringAntMatchers("/api/**")
+      // h2-console in iframe cannot do post requests if csrf is enabled
+      http.csrf().ignoringAntMatchers("/api/**").ignoringAntMatchers(h2ConsolePath + "/**")
       log.info("csrf is enabled")
     } else {
-      http.csrf().disable()
-      log.warn("csrf is disabled")
+      disableCSRF()
     }
-
-    http.sessionManagement().maximumSessions(1)
 
     if (enableHeaders) {
       log.info("security headers are enabled")
@@ -67,6 +70,10 @@ class SecurityConf extends WebSecurityConfigurerAdapter {
       log.warn("security headers are disabled")
     }
 
+    def disableCSRF(): Unit = {
+      http.csrf().disable()
+      log.warn("csrf is disabled")
+    }
   }
 
   override def configure(web: WebSecurity): Unit = {

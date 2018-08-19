@@ -26,7 +26,6 @@ $(document).ready(function () {
         $('#removeCategoryButton').off('click').click(function () {
             var row = table.row('.selected');
             postFormData(DELETE_CATEGORY_URL, {categoryId: row.data()[0]}, function (response) {
-                console.log("res ", response);
                 row.remove().draw(false);
             }, function (xhr, status, errorThrown) {
                 loadAlertFromServer('danger', xhr.responseJSON.errorMessage)

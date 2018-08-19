@@ -2,26 +2,28 @@ spring:
   servlet:
     multipart:
       max-file-size: 30MB
-  h2:
-    console:
-      enabled: true
   thymeleaf:
       cache: true
   jpa:
     hibernate:
       ddl-auto: none
+  h2:
+    console:
+      enabled: ${app.enabled.in-memory-auth}
+      path: /h2-console
 
 server:
   port: 8443
   ssl:
     keyStoreType: PKCS12
     keyAlias: local
+    enabled: true
   compression:
     enabled: true
   undertow:
     accesslog:
-      dir: /workspace-link/logs/
       enabled: true
+      dir: /workspace-link/logs/
       prefix: "undertow_access."
 
 logging:
@@ -59,8 +61,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-  jackson:
-    date-format: yyyy-MM-dd
 
 app:
   enabled:
@@ -88,9 +88,6 @@ logging:
 
 spring:
   profiles: production
-  h2:
-    console:
-      enabled: false
 
 server:
   port: 8445

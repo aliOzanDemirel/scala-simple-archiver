@@ -18,12 +18,10 @@ import org.springframework.web.multipart.MultipartFile
 import scala.collection.JavaConverters
 
 @Service
-class FileService @Autowired()(private val fileRepo: FileRepo) {
+class FileService @Autowired()(private val fileRepo: FileRepo,
+                               @Value("${app.file.path}") var rootFilePath: String) {
 
   val log: Logger = LoggerFactory.getLogger(classOf[FileService])
-
-  @Value("${app.file.path}")
-  var rootFilePath: String = _
 
   def getAllFiles: java.util.List[File] = {
     fileRepo.findAll().asInstanceOf[java.util.List[File]]
@@ -33,9 +31,9 @@ class FileService @Autowired()(private val fileRepo: FileRepo) {
     fileRepo.findById(id).orElse(null)
   }
 
-  def saveFile(fileForm: FileForm, category: Category): Boolean = {
+  def saveFile(fileForm: FileForm, category: Category): Option[File] = {
 
-    val file = new File
+    var file = new File
     try {
       file.setId(fileForm.id)
       file.setFileName(fileForm.fileName)
@@ -51,17 +49,14 @@ class FileService @Autowired()(private val fileRepo: FileRepo) {
         uploadFile(multipartFile, file.savedPath, fileForm.selectedFilePermissions)
       }
 
-      fileRepo.save(file)
+      return Some(fileRepo.save(file))
     } catch {
       case ex: IOException =>
         log.error(s"Error while writing file ${fileForm.fileName} to ${file.savedPath}", ex)
-        return false
       case ex: Exception =>
         log.error(s"Error while saving file ${fileForm.fileName} with category ${category.categoryName}", ex)
-        return false
     }
-
-    true
+    None
   }
 
   def uploadFile(multipartFile: MultipartFile, fullPath: String, permissions: Array[PosixFilePermission]): Unit = {
@@ -78,9 +73,6 @@ class FileService @Autowired()(private val fileRepo: FileRepo) {
       bos.write(multipartFile.getBytes)
     finally
       bos.close()
-
-    // can be used to log change
-    // Files.readAttributes(filePath, PosixFileAttributes.class).permissions()
 
     Files.setPosixFilePermissions(ioFilePath, JavaConverters.setAsJavaSet(permissions.toSet))
   }

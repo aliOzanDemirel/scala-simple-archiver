@@ -1,4 +1,4 @@
-package archiver.app.config
+package archiver.app.controller
 
 import archiver.app.common.Utils
 import javax.servlet.RequestDispatcher

@@ -8,6 +8,7 @@ object Mappings {
 
   final val REDIRECT_TO_FILES = "redirect:/files"
   final val REDIRECT_TO_CATEGORIES = "redirect:/categories"
+  final val REDIRECT_TO_FILE_FORM = "redirect:/file/form"
 
   final val ALL_FILES = "/files"
   final val FILE_FORM = "/file/form"
@@ -21,5 +22,8 @@ object Mappings {
 
   final val ADMIN = "/admin"
   final val H2_CONSOLE = "/h2-console"
+
+  final val API_FILES = "/api/files"
+  final val API_CATEGORIES = "/api/categories"
 
 }

@@ -7,7 +7,9 @@ import archiver.app.common.Utils.errorMap
 import archiver.app.common.{Mappings, Utils}
 import archiver.app.domain.form.FileForm
 import archiver.app.service.{CategoryService, FileService}
+import archiver.app.validation.MultipartValidator
 import javax.servlet.http.HttpServletRequest
+import javax.validation.Valid
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ByteArrayResource
@@ -16,10 +18,12 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation._
+import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
 @Controller
 class FileController @Autowired()(private val fileService: FileService,
-                                  private val categoryService: CategoryService) {
+                                  private val categoryService: CategoryService,
+                                  private val multipartValidator: MultipartValidator) {
 
   val log: Logger = LoggerFactory.getLogger(classOf[FileController])
 
@@ -36,15 +40,20 @@ class FileController @Autowired()(private val fileService: FileService,
   @GetMapping(Array(Mappings.FILE_FORM))
   def createOrEditFile(model: Model, @RequestParam(name = "id", required = false) id: java.lang.Long): String = {
 
-    var file = new FileForm
+    var fileForm = model.asMap().get("fileForm").asInstanceOf[FileForm]
+    if (fileForm == null) {
+      fileForm = new FileForm
+    }
+
     if (id == null) {
       log.debug("File record is being created")
+
     } else {
 
-      file = Utils.fileEntityToFileForm(fileService.getFileById(id))
+      fileForm = Utils.fileEntityToFileForm(fileService.getFileById(id))
 
-      if (file.id != 0) {
-        log.debug(s"File '${file.fileName}' is found, will be used to populate form")
+      if (fileForm.id != 0) {
+        log.debug(s"File '${fileForm.fileName}' is found, will be used to populate form")
 
       } else {
         log.warn(s"File with ID: $id is tried to be edited but not found")
@@ -54,27 +63,36 @@ class FileController @Autowired()(private val fileService: FileService,
 
     model.addAttribute("allFilePermissions", PosixFilePermission.values())
     model.addAttribute("allCategories", categoryService.getAllCategories)
-    model.addAttribute("file", file)
+    model.addAttribute("file", fileForm)
 
     Utils.decorateMainPage(model, "files/file-form", "file-form")
   }
 
   @PostMapping(Array(Mappings.SAVE_FILE))
-  def saveFile(@ModelAttribute(name = "file") fileForm: FileForm, errors: BindingResult, model: Model): String = {
+  def saveFile(@Valid @ModelAttribute(name = "file") fileForm: FileForm, binding: BindingResult,
+               redirect: RedirectAttributes): String = {
     log.debug(s"File with name ${fileForm.fileName} is being saved")
 
-    val category = categoryService.getCategoryById(fileForm.categoryId)
-
-    if (category == null) {
-      return "error"
+    // explicitly validate multipartFile because spring does not do it automatically
+    multipartValidator.validate(fileForm.multipartFile, binding)
+    if (binding.hasErrors) {
+      // binding.rejectValue(binding.getFieldError.getField,  binding.getFieldError.getDefaultMessage)
+      redirect.addFlashAttribute("org.springframework.validation.BindingResult.file", binding)
+      redirect.addFlashAttribute("fileForm", fileForm)
+      redirect.addFlashAttribute("validationError", true)
+      return Mappings.REDIRECT_TO_FILE_FORM
     }
 
-    val isSuccessful: Boolean = fileService.saveFile(fileForm, category)
+    val category = categoryService.getCategoryById(fileForm.categoryId.longValue())
+    if (category == null) {
+      throw new Exception("Category could not be found!")
+    }
 
-    if (isSuccessful) {
+    val fileSaved = fileService.saveFile(fileForm, category)
+    if (fileSaved.isDefined) {
       Mappings.REDIRECT_TO_FILES
     } else {
-      "error"
+      throw new Exception("File could not be saved!")
     }
   }
 

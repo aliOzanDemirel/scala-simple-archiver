@@ -1,5 +1,6 @@
 package archiver.app.controller
 
+import archiver.app.common.Mappings
 import archiver.app.domain.{Category, File}
 import archiver.app.service.{CategoryService, FileService}
 import org.slf4j.{Logger, LoggerFactory}
@@ -14,18 +15,18 @@ class ApiController @Autowired()(private val fileService: FileService,
 
   val log: Logger = LoggerFactory.getLogger(classOf[ApiController])
 
-  @GetMapping(Array("/api/files"))
+  @GetMapping(Array(Mappings.API_FILES))
   def getFiles: List[File] = {
-    log.info("Request to /api/files")
+    log.info("Request to " + Mappings.API_FILES)
 
     JavaConverters.asScalaIterator(fileService.getAllFiles.iterator()).toList
   }
 
-  @GetMapping(Array("/api/categories"))
+  @GetMapping(Array(Mappings.API_CATEGORIES))
   def getCategories: List[Category] = {
-    log.info("Request to /api/categories")
+    log.info("Request to " + Mappings.API_CATEGORIES)
 
-    categoryService.getAllCategories.toArray.toList.asInstanceOf[List[Category]]
+    JavaConverters.asScalaIterator(categoryService.getAllCategories.iterator()).toList
   }
 
 }

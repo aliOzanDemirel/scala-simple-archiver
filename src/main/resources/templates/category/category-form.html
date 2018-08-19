@@ -14,7 +14,7 @@
 
                 <div class="form-group row">
                     <label for="categoryName" class="col-form-label">Category Name</label>
-                    <input th:field="*{categoryName}" type="text" placeholder="No more than 60 characters"
+                    <input th:field="*{categoryName}" type="text" placeholder="No more than 40 characters"
                            id="categoryName" class="form-control"/>
                     <span role="alert" class="text-danger" th:if="${#fields.hasErrors('categoryName')}"
                           th:errors="*{categoryName}">Category Name Error

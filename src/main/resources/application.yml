@@ -6,15 +6,22 @@ spring:
       cache: true
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
   h2:
     console:
       enabled: ${app.enabled.in-memory-auth}
       path: /h2-console
+  datasource:
+    continueOnError: false
+    username: ozan
+    password:
+    url: jdbc:h2:mem:app;
 
 server:
   port: 8443
   ssl:
+    key-store: classpath:keystore/localhost.p12
+    key-store-password: aliozan
     keyStoreType: PKCS12
     keyAlias: local
     enabled: true
@@ -40,9 +47,9 @@ app:
     path: /workspace-link/UploadedFiles
   enabled:
     csrf: true
-    headers: true
+    headers: false
     security: true
-    in-memory-auth: false
+    in-memory-auth: true
 
 ---
 
@@ -53,24 +60,8 @@ spring:
   thymeleaf:
     cache: false
     prefix: file:src/main/resources/templates/
-  datasource:
-    continueOnError: false
-    username: ozan
-    password:
-    url: jdbc:h2:mem:app;
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-
-app:
-  enabled:
-    headers: false
-    in-memory-auth: true
 
 server:
-  ssl:
-    key-store: classpath:keystore/localhost.p12
-    key-store-password: aliozan
   undertow:
     accesslog:
       enabled: false
@@ -87,10 +78,30 @@ logging:
 ---
 
 spring:
+  profiles: docker
+  resources:
+    static-locations: classpath:/static/
+  thymeleaf:
+    prefix: classpath:/templates/
+
+---
+
+spring:
   profiles: production
+  datasource:
+    username: some-production-user
+    password: some-password
+    url: real-datasource-url
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+app:
+  enabled:
+    headers: true
+    in-memory-auth: false
 
 server:
-  port: 8445
   ssl:
     key-store: classpath:/keystore-link/some-production-keystore.p12
     key-store-password: some-password
